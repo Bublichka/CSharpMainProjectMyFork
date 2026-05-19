@@ -8,7 +8,7 @@ using UnityEngine;
 using Utilities;
 //Привет!
 //Как тебя зовут?
-//i'm fine
+//Все круто
 namespace Controller
 {
     public class BotController

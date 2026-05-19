@@ -7,7 +7,7 @@ using Model.Config;
 using UnityEngine;
 using Utilities;
 //Привет!
-//How are you?
+//Как тебя зовут?
 //i'm fine
 namespace Controller
 {

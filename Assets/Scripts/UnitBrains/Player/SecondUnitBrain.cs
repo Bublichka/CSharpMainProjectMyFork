@@ -1,9 +1,15 @@
-﻿using Model.Runtime.Projectiles;
+﻿using GluonGui.Dialog;
+using Model;
+using Model.Runtime.Projectiles;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using TMPro;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using Utilities;
 using static UnityEngine.GraphicsBuffer;
 
 namespace UnitBrains.Player
@@ -16,6 +22,7 @@ namespace UnitBrains.Player
         private float _temperature = 0f;
         private float _cooldownTime = 0f;
         private bool _overheated;
+        public List<Vector2Int> _targetNoRangeAttack = new();
 
         protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList)
         {
@@ -35,42 +42,62 @@ namespace UnitBrains.Player
             }
                 IncreaseTemperature();
             }
-    
         }
 
-             ///////////////////////////////////////
+        ///////////////////////////////////////
         public override Vector2Int GetNextStep()
-        {
-            return base.GetNextStep();
-        }
-
-        ///////////////////////////////////////
-        // Homework 1.4 (1st block, 4rd module)
-        ///////////////////////////////////////
-        protected override List<Vector2Int> SelectTargets()
         {   
-            List<Vector2Int>result = new List<Vector2Int>();
+            if (_targetNoRangeAttack.Count == 0)
+                return unit.Pos;
+          
+            Vector2Int target = _targetNoRangeAttack[0];
 
-            float minDistance = float.MaxValue;
-            if (result.Count == 0)
+            if (IsTargetInRange(target))
+                return unit.Pos;
+
+            Vector2Int positionUnitPlayer = unit.Pos.CalcNextStepTowards(target);
+            return positionUnitPlayer;
+        }
+        protected override List<Vector2Int> SelectTargets()//Метод выбора цели.
+        {
+            List<Vector2Int> result = new();//Список результатов.
+
+            _targetNoRangeAttack.Clear();
+
+            List<Vector2Int> allTargets = GetAllTargets().ToList();
+
+            if (allTargets.Count == 0)
             {
-                return result;
+                Vector2Int Base = runtimeModel.RoMap.Bases[
+                IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];
+                allTargets.Add(Base);
             }
-            Vector2Int closestTarget = result[0];
-            foreach (Vector2Int Target in result)
+               
+            Vector2Int closestTarget = allTargets[0];
+
+            float minDistance = DistanceToOwnBase(closestTarget);
+            foreach (var target in allTargets)
             {
-                if (DistanceToOwnBase(Target) < minDistance)
+                float distance = DistanceToOwnBase(closestTarget);
+                
+                if (distance < minDistance)
                 {
-                    closestTarget = Target;
-                    minDistance = DistanceToOwnBase(Target);
+                    minDistance = distance;
+                    closestTarget = target;
                 }
             }
-            result.Clear();
-            result.Add(closestTarget);
 
+            if (IsTargetInRange(closestTarget))
+            {
+                result.Add(closestTarget);
+            }
+            else
+            {
+                _targetNoRangeAttack.Add(closestTarget);
+            }
+                
             return result;
         }
-
 
 
         ///////////////////////////////////////
@@ -103,4 +130,40 @@ namespace UnitBrains.Player
     }
 }
 
+//if (== 0)
+//{
+//    return unit.Pos;
+//}
+//if (> 0)
+//{
+//    Vector2Int positionUnitPlayer = unit.Pos;
+//    Vector2Int nextPositionPlayer = _targetNoRangeAttack;
+//    positionUnitPlayer = positionUnitPlayer.CalcNextStepTowards(nextPositionPlayer);
 
+//    return nextPositionPlayer;
+//}
+
+//List<Vector2Int> _targetNoRangeAttack = new List<Vector2Int>();//Список для целей вне зоны атаки.
+
+//var EnemyBase = runtimeModel.RoMap.Bases[
+//    IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];//Получаем базу и определяем чья она.
+
+
+//float minDistance = float.MaxValue;//Код для опеределения ближайшей цели.
+//if (result.Count == 0)
+//{
+//    return result;
+//}
+//Vector2Int closestTarget = result[0];
+//foreach (Vector2Int Target in result)
+//{
+//    if (DistanceToOwnBase(Target) < minDistance)
+//    {
+//        closestTarget = Target;
+//        minDistance = DistanceToOwnBase(Target);
+//    }
+//}
+//result.Clear();
+//result.Add(closestTarget);
+
+//return result;

@@ -1,4 +1,5 @@
-﻿using GluonGui.Dialog;
+﻿using Codice.Client.Common.GameUI;
+using GluonGui.Dialog;
 using Model;
 using Model.Runtime.Projectiles;
 using System;
@@ -13,7 +14,7 @@ using Utilities;
 using static UnityEngine.GraphicsBuffer;
 
 namespace UnitBrains.Player
-{
+{   
     public class SecondUnitBrain : DefaultPlayerUnitBrain
     {
         public override string TargetUnitName => "Cobra Commando";
@@ -23,6 +24,13 @@ namespace UnitBrains.Player
         private float _cooldownTime = 0f;
         private bool _overheated;
         public List<Vector2Int> _targetNoRangeAttack = new();
+        private static int targetCounter { get; set; } = 0;
+        private int unitNumber { get; set; } = GetAndIncreaseUnitCounter();
+        public static int MaxCounter = 3;
+        private static int GetAndIncreaseUnitCounter()
+        {
+            return targetCounter++;
+        }
 
         protected override void GenerateProjectiles(Vector2Int forTarget, List<BaseProjectile> intoList)
         {
@@ -58,13 +66,18 @@ namespace UnitBrains.Player
             Vector2Int positionUnitPlayer = unit.Pos.CalcNextStepTowards(target);
             return positionUnitPlayer;
         }
+        
         protected override List<Vector2Int> SelectTargets()//Метод выбора цели.
-        {
+        {   
             List<Vector2Int> result = new();//Список результатов.
+
+            result.Clear();
+
+            List<Vector2Int> allTargets = GetAllTargets().ToList();
 
             _targetNoRangeAttack.Clear();
 
-            List<Vector2Int> allTargets = GetAllTargets().ToList();
+            SortByDistanceToOwnBase(allTargets);
 
             if (allTargets.Count == 0)
             {
@@ -72,7 +85,11 @@ namespace UnitBrains.Player
                 IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];
                 allTargets.Add(Base);
             }
-               
+
+            int targetIndex = MaxCounter > allTargets.Count() ? unitNumber % allTargets.Count() : unitNumber % MaxCounter;
+            Vector2Int targets = allTargets[targetIndex];
+            result.Add(targets);
+
             Vector2Int closestTarget = allTargets[0];
 
             float minDistance = DistanceToOwnBase(closestTarget);
@@ -95,10 +112,9 @@ namespace UnitBrains.Player
             {
                 _targetNoRangeAttack.Add(closestTarget);
             }
-                
+
             return result;
         }
-
 
         ///////////////////////////////////////
         public override void Update(float deltaTime, float time)

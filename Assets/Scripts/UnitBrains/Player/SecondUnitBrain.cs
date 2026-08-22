@@ -54,63 +54,47 @@ namespace UnitBrains.Player
 
         ///////////////////////////////////////
         public override Vector2Int GetNextStep()
-        {   
-            if (_targetNoRangeAttack.Count == 0)
+        {
+            if (_targetNoRangeAttack.Count == 0)// Нет цели для движения — стоим
                 return unit.Pos;
-          
+
             Vector2Int target = _targetNoRangeAttack[0];
 
-            if (IsTargetInRange(target))
+            if (IsTargetInRange(target))// Цель уже в зоне атаки — останавливаемся
                 return unit.Pos;
 
-            Vector2Int positionUnitPlayer = unit.Pos.CalcNextStepTowards(target);
-            return positionUnitPlayer;
+            return unit.Pos.CalcNextStepTowards(target);// Делаем шаг к цели
         }
-        
-        protected override List<Vector2Int> SelectTargets()//Метод выбора цели.
-        {   
-            List<Vector2Int> result = new();//Список результатов.
 
-            result.Clear();
+        protected override List<Vector2Int> SelectTargets()
+        {
+            List<Vector2Int> result = new();// Цели, которые юнит атакует в этом тике (в зоне досягаемости)
 
-            List<Vector2Int> allTargets = GetAllTargets().ToList();
-
-            _targetNoRangeAttack.Clear();
-
-            SortByDistanceToOwnBase(allTargets);
+            List<Vector2Int> allTargets = GetAllTargets().ToList();// Все доступные цели
 
             if (allTargets.Count == 0)
             {
-                Vector2Int Base = runtimeModel.RoMap.Bases[
-                IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];
-                allTargets.Add(Base);
+                Vector2Int enemyBase = runtimeModel.RoMap.Bases[
+                    IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];// Если вражеских юнитов нет — целимся в базу
+                allTargets.Add(enemyBase);
             }
 
-            int targetIndex = MaxCounter > allTargets.Count() ? unitNumber % allTargets.Count() : unitNumber % MaxCounter;
-            Vector2Int targets = allTargets[targetIndex];
-            result.Add(targets);
+            SortByDistanceToOwnBase(allTargets);// Сортируем по расстоянию до нашей базы
 
-            Vector2Int closestTarget = allTargets[0];
+            Vector2Int closestTarget = allTargets[0];// Самая близкая цель — наш приоритет
 
-            float minDistance = DistanceToOwnBase(closestTarget);
-            foreach (var target in allTargets)
-            {
-                float distance = DistanceToOwnBase(closestTarget);
-                
-                if (distance < minDistance)
-                {
-                    minDistance = distance;
-                    closestTarget = target;
-                }
-            }
+            _targetNoRangeAttack.Clear();// Очищаем список для движения на каждом тике,
+            // чтобы туда не попадали «устаревшие» цели
 
             if (IsTargetInRange(closestTarget))
             {
-                result.Add(closestTarget);
+
+                result.Add(closestTarget);// Цель в зоне атаки — бьём её, идти не нужно
             }
             else
             {
-                _targetNoRangeAttack.Add(closestTarget);
+
+                _targetNoRangeAttack.Add(closestTarget);// Цель вне зоны — идём к ней, но пока не атакуем
             }
 
             return result;
@@ -145,41 +129,3 @@ namespace UnitBrains.Player
         }
     }
 }
-
-//if (== 0)
-//{
-//    return unit.Pos;
-//}
-//if (> 0)
-//{
-//    Vector2Int positionUnitPlayer = unit.Pos;
-//    Vector2Int nextPositionPlayer = _targetNoRangeAttack;
-//    positionUnitPlayer = positionUnitPlayer.CalcNextStepTowards(nextPositionPlayer);
-
-//    return nextPositionPlayer;
-//}
-
-//List<Vector2Int> _targetNoRangeAttack = new List<Vector2Int>();//Список для целей вне зоны атаки.
-
-//var EnemyBase = runtimeModel.RoMap.Bases[
-//    IsPlayerUnitBrain ? RuntimeModel.BotPlayerId : RuntimeModel.PlayerId];//Получаем базу и определяем чья она.
-
-
-//float minDistance = float.MaxValue;//Код для опеределения ближайшей цели.
-//if (result.Count == 0)
-//{
-//    return result;
-//}
-//Vector2Int closestTarget = result[0];
-//foreach (Vector2Int Target in result)
-//{
-//    if (DistanceToOwnBase(Target) < minDistance)
-//    {
-//        closestTarget = Target;
-//        minDistance = DistanceToOwnBase(Target);
-//    }
-//}
-//result.Clear();
-//result.Add(closestTarget);
-
-//return result;
